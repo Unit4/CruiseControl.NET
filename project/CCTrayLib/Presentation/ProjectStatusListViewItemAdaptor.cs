@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using ThoughtWorks.CruiseControl.CCTrayLib.Configuration;
 using ThoughtWorks.CruiseControl.CCTrayLib.Monitoring;
@@ -21,11 +22,18 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 
 
         private readonly ICCTrayMultiConfiguration config = null;
+        private readonly ListView listView = null;
+        private readonly IList<ProjectState> hideStates = null;
 
-        public ProjectStatusListViewItemAdaptor(IDetailStringProvider detailStringProvider, ICCTrayMultiConfiguration config)
+        private bool removed = false;
+        
+
+        public ProjectStatusListViewItemAdaptor(IDetailStringProvider detailStringProvider, ICCTrayMultiConfiguration config, ListView listView, IList<ProjectState> hideStates)
             : this(detailStringProvider)
         {
             this.config = config;
+            this.listView = listView;
+            this.hideStates = hideStates;
         }
 
         public ProjectStatusListViewItemAdaptor(IDetailStringProvider detailStringProvider)
@@ -49,7 +57,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             item.SubItems.Add(qName);
             qPriority = new ListViewItem.ListViewSubItem(item, string.Empty);
             item.SubItems.Add(qPriority);
-            
+
         }
 
         public ListViewItem Create(IProjectMonitor projectMonitor)
@@ -65,6 +73,15 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 
         private void Monitor_Polled(object sauce, MonitorPolledEventArgs args)
         {
+            if (hideStates.Contains(args.ProjectMonitor.ProjectState))
+            {
+                this.removed = true;
+                item.Remove();
+            }
+            else if (removed) {
+                removed = false;
+                listView.Items.Add(item);
+            }
             DisplayProjectStateInListViewItem(args.ProjectMonitor);
         }
 
@@ -98,7 +115,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                 category.Text = monitor.Detail.Category;
                 qName.Text = monitor.Detail.QueueName;
                 qPriority.Text = monitor.Detail.QueuePriority.ToString("D8");
-                
+
             }
             else
             {
@@ -107,5 +124,6 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 
             detail.Text = detailStringProvider.FormatDetailString(monitor.Detail);
         }
+
     }
 }

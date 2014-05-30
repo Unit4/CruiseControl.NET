@@ -14,123 +14,125 @@ using ThoughtWorks.CruiseControl.CCTrayLib.Speech;
 
 namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 {
-	public class MainFormController
-	{
-		private IProjectMonitor selectedProject;
-		private readonly ICCTrayMultiConfiguration configuration;
-		private Poller serverPoller;
-		private Poller projectPoller;
-		private readonly IServerMonitor aggregatedServerMonitor;
-		private readonly IProjectMonitor aggregatedProjectMonitor;
-		private readonly ISingleServerMonitor[] serverMonitors;
-		private readonly IProjectMonitor[] projectMonitors;
-		private readonly ProjectStateIconAdaptor projectStateIconAdaptor;
-		private readonly IProjectStateIconProvider projectStateIconProvider;
-		private readonly IIntegrationQueueIconProvider queueIconProvider;
-		private BuildTransitionSoundPlayer soundPlayer;
+    public class MainFormController
+    {
+        private IProjectMonitor selectedProject;
+        private readonly ICCTrayMultiConfiguration configuration;
+        private Poller serverPoller;
+        private Poller projectPoller;
+        private readonly IServerMonitor aggregatedServerMonitor;
+        private readonly IProjectMonitor aggregatedProjectMonitor;
+        private readonly ISingleServerMonitor[] serverMonitors;
+        private readonly IProjectMonitor[] projectMonitors;
+        private readonly ProjectStateIconAdaptor projectStateIconAdaptor;
+        private readonly IProjectStateIconProvider projectStateIconProvider;
+        private readonly IIntegrationQueueIconProvider queueIconProvider;
+        private BuildTransitionSoundPlayer soundPlayer;
         private X10Controller x10Controller;
-		private GrowlController growlController;
+        private GrowlController growlController;
         private BuildTransitionExecRunner execRunner;
         private MainForm mainForm;
         private Dictionary<string, ServerSnapshotChangedEventArgs> changeList = new Dictionary<string, ServerSnapshotChangedEventArgs>();
+        private IList<ProjectState> hideStates = new List<ProjectState>();
 #if !DISABLE_COM
         private SpeakingProjectMonitor speakerForTheDead;
 #endif
 
-		public MainFormController(ICCTrayMultiConfiguration configuration, ISynchronizeInvoke owner, MainForm mainForm)
-		{
+        public MainFormController(ICCTrayMultiConfiguration configuration, ISynchronizeInvoke owner, MainForm mainForm)
+        {
             this.mainForm = mainForm;
-			this.configuration = configuration;
+            this.configuration = configuration;
 
-			serverMonitors = configuration.GetServerMonitors();
-			for (int i = 0; i < serverMonitors.Length; i++)
-			{
-				serverMonitors[i] = new SynchronizedServerMonitor(serverMonitors[i], owner);
+            serverMonitors = configuration.GetServerMonitors();
+            for (int i = 0; i < serverMonitors.Length; i++)
+            {
+                serverMonitors[i] = new SynchronizedServerMonitor(serverMonitors[i], owner);
                 serverMonitors[i].Start();
-			}
-			aggregatedServerMonitor = new AggregatingServerMonitor(serverMonitors);
-			queueIconProvider = new ResourceIntegrationQueueIconProvider();
+            }
+            aggregatedServerMonitor = new AggregatingServerMonitor(serverMonitors);
+            queueIconProvider = new ResourceIntegrationQueueIconProvider();
 
-			projectMonitors = configuration.GetProjectStatusMonitors(serverMonitors);
-			for (int i = 0; i < projectMonitors.Length; i++)
-			{
-				projectMonitors[i] = new SynchronizedProjectMonitor(projectMonitors[i], owner);
-			}			
-			aggregatedProjectMonitor = new AggregatingProjectMonitor(projectMonitors);
-			projectStateIconProvider = new ConfigurableProjectStateIconProvider(configuration.Icons);
-			projectStateIconAdaptor = new ProjectStateIconAdaptor(aggregatedProjectMonitor, projectStateIconProvider);
-			soundPlayer = new BuildTransitionSoundPlayer(aggregatedProjectMonitor, new AudioPlayer(), configuration.Audio);
+            projectMonitors = configuration.GetProjectStatusMonitors(serverMonitors);
+            for (int i = 0; i < projectMonitors.Length; i++)
+            {
+                projectMonitors[i] = new SynchronizedProjectMonitor(projectMonitors[i], owner);
+            }
+            aggregatedProjectMonitor = new AggregatingProjectMonitor(projectMonitors);
+            projectStateIconProvider = new ConfigurableProjectStateIconProvider(configuration.Icons);
+            projectStateIconAdaptor = new ProjectStateIconAdaptor(aggregatedProjectMonitor, projectStateIconProvider);
+            soundPlayer = new BuildTransitionSoundPlayer(aggregatedProjectMonitor, new AudioPlayer(), configuration.Audio);
             execRunner = new BuildTransitionExecRunner(aggregatedProjectMonitor, configuration.Execs);
-			LampController lampController = new LampController(configuration.X10,null);
-			x10Controller = new X10Controller(aggregatedProjectMonitor,new DateTimeProvider(),configuration.X10,lampController);
-			
-			growlController = new GrowlController(aggregatedProjectMonitor, configuration.Growl);
+            LampController lampController = new LampController(configuration.X10, null);
+            x10Controller = new X10Controller(aggregatedProjectMonitor, new DateTimeProvider(), configuration.X10, lampController);
+
+            growlController = new GrowlController(aggregatedProjectMonitor, configuration.Growl);
 
 #if !DISABLE_COM
-			IBalloonMessageProvider balloonMessageProvider = new ConfigurableBalloonMessageProvider(configuration.BalloonMessages);
-			speakerForTheDead = new SpeakingProjectMonitor(aggregatedProjectMonitor, balloonMessageProvider, configuration.Speech);
+            IBalloonMessageProvider balloonMessageProvider = new ConfigurableBalloonMessageProvider(configuration.BalloonMessages);
+            speakerForTheDead = new SpeakingProjectMonitor(aggregatedProjectMonitor, balloonMessageProvider, configuration.Speech);
 #endif
-		}
+        }
 
-		public IProjectMonitor SelectedProject
-		{
-			get { return selectedProject; }
-			set
-			{
-				selectedProject = value;
-				if (IsProjectSelectedChanged != null)
-					IsProjectSelectedChanged(this, EventArgs.Empty);
-			}
-		}
-		
-		public IProjectMonitor[] Monitors
-		{
-			get
-			{
-				return projectMonitors;
-			}
-		}
+        public IProjectMonitor SelectedProject
+        {
+            get { return selectedProject; }
+            set
+            {
+                selectedProject = value;
+                if (IsProjectSelectedChanged != null)
+                    IsProjectSelectedChanged(this, EventArgs.Empty);
+            }
+        }
 
-		public bool IsProjectSelected
-		{
-			get { return selectedProject != null; }
-		}
-		
-		public bool IsProjectBuilding
-		{
-			get
-			{
-				if (SelectedProject != null)
-				{
-					if ((SelectedProject.ProjectState == ProjectState.Building) ||
-						(SelectedProject.ProjectState == ProjectState.BrokenAndBuilding))
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else
-				{
-			        return false;
-				}
-			}
-		}
-		
-		public bool IsProjectRunning
-		{
-			get {
-				if (!IsProjectSelected) return false;
-				if (!selectedProject.IsConnected) return false;
-				else
-				{
-			    bool isProjectRunning = selectedProject.ProjectIntegratorState.Equals(Remote.ProjectIntegratorState.Running.ToString());
-			    return isProjectRunning;
-			}
-		}
-		}
+        public IProjectMonitor[] Monitors
+        {
+            get
+            {
+                return projectMonitors;
+            }
+        }
+
+        public bool IsProjectSelected
+        {
+            get { return selectedProject != null; }
+        }
+
+        public bool IsProjectBuilding
+        {
+            get
+            {
+                if (SelectedProject != null)
+                {
+                    if ((SelectedProject.ProjectState == ProjectState.Building) ||
+                        (SelectedProject.ProjectState == ProjectState.BrokenAndBuilding))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        public bool IsProjectRunning
+        {
+            get
+            {
+                if (!IsProjectSelected) return false;
+                if (!selectedProject.IsConnected) return false;
+                else
+                {
+                    bool isProjectRunning = selectedProject.ProjectIntegratorState.Equals(Remote.ProjectIntegratorState.Running.ToString());
+                    return isProjectRunning;
+                }
+            }
+        }
 
         public bool ShowForceBuildButton
         {
@@ -151,7 +153,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
         }
 
 
-		public event EventHandler IsProjectSelectedChanged;
+        public event EventHandler IsProjectSelectedChanged;
 
         public void CopyBuildLabel()
         {
@@ -163,7 +165,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                 {
                     Clipboard.SetText(SelectedProject.Detail.LastBuildLabel);
                 }
-                catch (System.Runtime.InteropServices.ExternalException){}
+                catch (System.Runtime.InteropServices.ExternalException) { }
             }
         }
 
@@ -206,27 +208,28 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             }
         }
 
-		public void ForceBuild(Dictionary<string, string> parameters)
-		{
+        public void ForceBuild(Dictionary<string, string> parameters)
+        {
             if (IsProjectSelected && SelectedProject.ProjectState != ProjectState.NotConnected)
             {
                 try
                 {
-                	RunSecureMethod(b => {
+                    RunSecureMethod(b =>
+                    {
                         SelectedProject.ForceBuild(parameters, this.GetUserName());
-                	}, "ForceBuild");
+                    }, "ForceBuild");
                 }
                 catch (Exception error)
                 {
                     MessageBox.Show("An unexpected error has occurred while trying to force build" +
                             Environment.NewLine +
-                            error.Message, 
-                        "Unknown error", 
-                        MessageBoxButtons.OK, 
+                            error.Message,
+                        "Unknown error",
+                        MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }
             }
-		}
+        }
 
         public void AbortBuild()
         {
@@ -238,14 +241,14 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                 }, "AbortBuild");
             }
         }
-		
-		public void DisplayWebPage()
-		{
-		    if (IsProjectSelected)
-			{
-		        DisplayWebPageForProject(SelectedProject.Detail);
-		}
-		}
+
+        public void DisplayWebPage()
+        {
+            if (IsProjectSelected)
+            {
+                DisplayWebPageForProject(SelectedProject.Detail);
+            }
+        }
 
         public void BindToTrayIcon(TrayIconFacade trayIcon)
         {
@@ -256,50 +259,50 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                 configuration.MinimumNotificationLevel);
         }
 
-		public void BindToListView(ListView listView)
-		{
-			IDetailStringProvider detailStringProvider = new DetailStringProvider();
-			foreach (IProjectMonitor monitor in projectMonitors)
-			{
-				ListViewItem item = new ProjectStatusListViewItemAdaptor(detailStringProvider, configuration).Create(monitor);
-				item.Tag = monitor;
-				listView.Items.Add(item);
-			}
-			if (listView.Items.Count > 0) listView.Items[0].Selected = true;
-		}
+        public void BindToListView(ListView listView)
+        {
+            IDetailStringProvider detailStringProvider = new DetailStringProvider();
+            foreach (IProjectMonitor monitor in projectMonitors)
+            {
+                ListViewItem item = new ProjectStatusListViewItemAdaptor(detailStringProvider, configuration, listView, hideStates).Create(monitor);
+                item.Tag = monitor;
+                listView.Items.Add(item);
+            }
+            if (listView.Items.Count > 0) listView.Items[0].Selected = true;
+        }
 
-		public void BindToQueueTreeView(QueueTreeView treeView)
-		{
-			StartProjectMonitoring();
-			treeView.BeginUpdate();
-			treeView.Nodes.Clear();
-			foreach (ISingleServerMonitor monitor in serverMonitors)
-			{
-				IntegrationQueueTreeNodeAdaptor adaptor = new IntegrationQueueTreeNodeAdaptor(monitor);
-				TreeNode serverTreeNode = adaptor.Create();
-				treeView.Nodes.Add(serverTreeNode);
+        public void BindToQueueTreeView(QueueTreeView treeView)
+        {
+            StartProjectMonitoring();
+            treeView.BeginUpdate();
+            treeView.Nodes.Clear();
+            foreach (ISingleServerMonitor monitor in serverMonitors)
+            {
+                IntegrationQueueTreeNodeAdaptor adaptor = new IntegrationQueueTreeNodeAdaptor(monitor);
+                TreeNode serverTreeNode = adaptor.Create();
+                treeView.Nodes.Add(serverTreeNode);
                 monitor.ServerSnapshotChanged += HandleServerSnapshotChange;
-			}
-			treeView.EndUpdate();
-			if (treeView.Nodes.Count > 0)
-			{
-				treeView.SelectedNode = treeView.Nodes[0];
-			}
-		}
+            }
+            treeView.EndUpdate();
+            if (treeView.Nodes.Count > 0)
+            {
+                treeView.SelectedNode = treeView.Nodes[0];
+            }
+        }
 
-		public void UnbindToQueueTreeView(QueueTreeView treeView)
-		{
-			treeView.BeginUpdate();
-			foreach (TreeNode node in treeView.Nodes)
-			{
-				IntegrationQueueTreeNodeAdaptor adaptor = node.Tag as IntegrationQueueTreeNodeAdaptor;
-				if (adaptor != null)
-				{
-					adaptor.Detach();
-				}
-			}
-			treeView.Nodes.Clear();
-			treeView.EndUpdate();
+        public void UnbindToQueueTreeView(QueueTreeView treeView)
+        {
+            treeView.BeginUpdate();
+            foreach (TreeNode node in treeView.Nodes)
+            {
+                IntegrationQueueTreeNodeAdaptor adaptor = node.Tag as IntegrationQueueTreeNodeAdaptor;
+                if (adaptor != null)
+                {
+                    adaptor.Detach();
+                }
+            }
+            treeView.Nodes.Clear();
+            treeView.EndUpdate();
 
             foreach (ISingleServerMonitor monitor in serverMonitors)
             {
@@ -307,26 +310,26 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             }
         }
 
-		public void StartServerMonitoring()
-		{
-			StopServerMonitoring();
+        public void StartServerMonitoring()
+        {
+            StopServerMonitoring();
 
-			serverPoller = new Poller(configuration.PollPeriodSeconds, aggregatedServerMonitor);
-			serverPoller.Start();
+            serverPoller = new Poller(configuration.PollPeriodSeconds, aggregatedServerMonitor);
+            serverPoller.Start();
 
-		    StartProjectMonitoring();
-		}
+            StartProjectMonitoring();
+        }
 
-		public void StopServerMonitoring()
-		{
-		    StopProjectMonitoring();
+        public void StopServerMonitoring()
+        {
+            StopProjectMonitoring();
 
-			if (serverPoller != null)
-			{
-				serverPoller.Stop();
-				serverPoller = null;
-			}
-		}
+            if (serverPoller != null)
+            {
+                serverPoller.Stop();
+                serverPoller = null;
+            }
+        }
 
         private void StartProjectMonitoring()
         {
@@ -343,55 +346,55 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                 projectPoller = null;
             }
         }
-		
-		public void StopProject()
-		{
+
+        public void StopProject()
+        {
             RunSecureMethod(b =>
             {
                 selectedProject.StopProject();
             }, "StopProject");
-		}
-		
-		public void StartProject()
-		{
+        }
+
+        public void StartProject()
+        {
             RunSecureMethod(b =>
             {
                 selectedProject.StartProject();
             }, "StartProject");
-		}
+        }
 
-		public IProjectStateIconProvider ProjectStateIconProvider
-		{
-			get { return projectStateIconProvider; }
-		}
-		
-		public ProjectStateIconAdaptor ProjectStateIconAdaptor
-		{
-			get { return projectStateIconAdaptor; }
-		}
+        public IProjectStateIconProvider ProjectStateIconProvider
+        {
+            get { return projectStateIconProvider; }
+        }
 
-		public bool OnDoubleClick()
-		{
-		    if (configuration.TrayIconDoubleClickAction != TrayIconDoubleClickAction.NavigateToWebPageOfFirstProject)
-		        return false;
+        public ProjectStateIconAdaptor ProjectStateIconAdaptor
+        {
+            get { return projectStateIconAdaptor; }
+        }
 
-		    if (projectMonitors.Length == 0)
-		        return false;
+        public bool OnDoubleClick()
+        {
+            if (configuration.TrayIconDoubleClickAction != TrayIconDoubleClickAction.NavigateToWebPageOfFirstProject)
+                return false;
 
-		    DisplayWebPageForProject(projectMonitors[0].Detail);
-		    return true;
-		}
+            if (projectMonitors.Length == 0)
+                return false;
 
-	    private static void DisplayWebPageForProject(ISingleProjectDetail project)
-		{
-			if (project.IsConnected)
-			{
-				string url = project.WebURL;
-				Process.Start(url);
-			}
-		}
+            DisplayWebPageForProject(projectMonitors[0].Detail);
+            return true;
+        }
 
-	    private readonly ProjectState[] stateIconOrder = new ProjectState[]
+        private static void DisplayWebPageForProject(ISingleProjectDetail project)
+        {
+            if (project.IsConnected)
+            {
+                string url = project.WebURL;
+                Process.Start(url);
+            }
+        }
+
+        private readonly ProjectState[] stateIconOrder = new ProjectState[]
 	                                                         {
 	                                                             ProjectState.NotConnected, 
                                                                  ProjectState.Success,
@@ -400,7 +403,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 	                                                             ProjectState.BrokenAndBuilding,
 	                                                         };
 
-	    private readonly IntegrationQueueNodeType[] queueIconOrder = new IntegrationQueueNodeType[]
+        private readonly IntegrationQueueNodeType[] queueIconOrder = new IntegrationQueueNodeType[]
 	                                                                     {
 	                                                                         IntegrationQueueNodeType.RemotingServer,
 	                                                                         IntegrationQueueNodeType.HttpServer,
@@ -412,37 +415,37 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 	                                                                     };
 
         public void PopulateImageList(ImageList imageList)
-		{
-			imageList.Images.Clear();
+        {
+            imageList.Images.Clear();
             foreach (ProjectState x in stateIconOrder)
                 imageList.Images.Add(projectStateIconProvider.GetStatusIconForState(x).Icon);
-		}
+        }
 
-		public void PopulateQueueImageList(ImageList imageList)
-		{
-			imageList.Images.Clear();
-		    foreach (IntegrationQueueNodeType x in queueIconOrder)
-		        imageList.Images.Add(queueIconProvider.GetStatusIconForNodeType(x).Icon);
-		}
+        public void PopulateQueueImageList(ImageList imageList)
+        {
+            imageList.Images.Clear();
+            foreach (IntegrationQueueNodeType x in queueIconOrder)
+                imageList.Images.Add(queueIconProvider.GetStatusIconForNodeType(x).Icon);
+        }
 
         public void SetFormTopMost(Form form)
         {
             form.TopMost = configuration.AlwaysOnTop;
         }
 
-		public void SetFormShowInTaskbar(Form form)
-		{
-			form.ShowInTaskbar = configuration.ShowInTaskbar;
-		}
+        public void SetFormShowInTaskbar(Form form)
+        {
+            form.ShowInTaskbar = configuration.ShowInTaskbar;
+        }
 
-		public bool CanFixBuild()
-		{
-			return IsProjectSelected && 
-			       (selectedProject.ProjectState == ProjectState.Broken || selectedProject.ProjectState == ProjectState.BrokenAndBuilding);
-		}
+        public bool CanFixBuild()
+        {
+            return IsProjectSelected &&
+                   (selectedProject.ProjectState == ProjectState.Broken || selectedProject.ProjectState == ProjectState.BrokenAndBuilding);
+        }
 
-		public void VolunteerToFixBuild()
-		{
+        public void VolunteerToFixBuild()
+        {
             if (IsProjectSelected)
             {
                 RunSecureMethod(b =>
@@ -450,15 +453,15 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                     selectedProject.FixBuild(this.GetUserName());
                 }, "FixBuild");
             }
-		}
+        }
 
-		public bool CanCancelPending()
-		{
-			return IsProjectSelected && selectedProject.IsPending;
-		}
+        public bool CanCancelPending()
+        {
+            return IsProjectSelected && selectedProject.IsPending;
+        }
 
-		public void CancelPending()
-		{
+        public void CancelPending()
+        {
             if (IsProjectSelected)
             {
                 RunSecureMethod(b =>
@@ -466,23 +469,23 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                     selectedProject.CancelPending();
                 }, "CancelPending");
             }
-		}
+        }
 
-		public void CancelPendingProjectByName(string projectName)
-		{
-			foreach (IProjectMonitor projectMonitor in projectMonitors)
-			{
-				if (projectMonitor.Detail.ProjectName == projectName)
-				{
-					SelectedProject = projectMonitor;
+        public void CancelPendingProjectByName(string projectName)
+        {
+            foreach (IProjectMonitor projectMonitor in projectMonitors)
+            {
+                if (projectMonitor.Detail.ProjectName == projectName)
+                {
+                    SelectedProject = projectMonitor;
                     RunSecureMethod(b =>
                     {
                         CancelPending();
                     }, "CancelPending");
-					break;
-				}
-			}
-		}
+                    break;
+                }
+            }
+        }
 
         private void RunSecureMethod(Action<bool> methodToRun, string methodName)
         {
@@ -492,15 +495,15 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             }
             catch (Exception error)
             {
-                MessageBox.Show(string.Format(System.Globalization.CultureInfo.CurrentCulture,"Unable to {0}, the following error occurred:{1}{2}",
+                MessageBox.Show(string.Format(System.Globalization.CultureInfo.CurrentCulture, "Unable to {0}, the following error occurred:{1}{2}",
                     methodName,
                     Environment.NewLine,
                     error.Message),
                     "Error",
-                    MessageBoxButtons.OK, 
+                    MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
-		}
+        }
 
         /// <summary>
         /// Display the current status of a build.
@@ -705,5 +708,29 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                 return this.configuration.FixUserName;
             }
         }
-	}
+
+
+        public void hideSucceded(bool hide)
+        {
+            hideState(hide, ProjectState.Success);
+        }
+
+        internal void hideBuilding(bool hide)
+        {
+            hideState(hide, ProjectState.Building);
+            hideState(hide, ProjectState.BrokenAndBuilding);
+        }
+
+        internal void hideState(bool hide, ProjectState state) {
+            if (hide)
+            {
+                this.hideStates.Add(state);
+            }
+            else
+            {
+                this.hideStates.Remove(state);
+            }
+        }
+    }
+
 }

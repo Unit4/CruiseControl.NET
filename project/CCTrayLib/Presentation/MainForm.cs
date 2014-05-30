@@ -9,6 +9,7 @@ using ThoughtWorks.CruiseControl.CCTrayLib.Monitoring;
 using Message = System.Windows.Forms.Message;
 using System.Text;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 {
@@ -92,6 +93,11 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
         private bool queueViewPanelVisible;
         private Button closeUpdateButton;
         private Label label1;
+        private MenuItem mnuHideSucceded;
+        private MenuItem mnuHideBuilding;
+        private MenuItem mnuUnit4;
+        private MenuItem mnuCIOverview;
+        private MenuItem mnuContactTeam;
         private readonly TrayIconFacade iconFacade;
 
         public MainForm(ICCTrayMultiConfiguration configuration)
@@ -220,16 +226,16 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.mnuAbout = new System.Windows.Forms.MenuItem();
             this.lvProjects = new System.Windows.Forms.ListView();
-            this.colProject = new System.Windows.Forms.ColumnHeader();
-            this.colServer = new System.Windows.Forms.ColumnHeader();
-            this.colCategory = new System.Windows.Forms.ColumnHeader();
-            this.colActivity = new System.Windows.Forms.ColumnHeader();
-            this.colDetail = new System.Windows.Forms.ColumnHeader();
-            this.colLastBuildLabel = new System.Windows.Forms.ColumnHeader();
-            this.colLastBuildTime = new System.Windows.Forms.ColumnHeader();
-            this.colProjectStatus = new System.Windows.Forms.ColumnHeader();
-            this.colQName = new System.Windows.Forms.ColumnHeader();
-            this.colQPriority = new System.Windows.Forms.ColumnHeader();
+            this.colProject = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colServer = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colCategory = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colActivity = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colDetail = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colLastBuildLabel = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colLastBuildTime = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colProjectStatus = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colQName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.colQPriority = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.projectContextMenu = new System.Windows.Forms.ContextMenu();
             this.mnuForce = new System.Windows.Forms.MenuItem();
             this.mnuAbort = new System.Windows.Forms.MenuItem();
@@ -252,6 +258,11 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.mnuViewIcons = new System.Windows.Forms.MenuItem();
             this.mnuViewList = new System.Windows.Forms.MenuItem();
             this.mnuViewDetails = new System.Windows.Forms.MenuItem();
+            this.mnuHideSucceded = new System.Windows.Forms.MenuItem();
+            this.mnuHideBuilding = new System.Windows.Forms.MenuItem();
+            this.mnuUnit4 = new System.Windows.Forms.MenuItem();
+            this.mnuCIOverview = new System.Windows.Forms.MenuItem();
+            this.mnuContactTeam = new System.Windows.Forms.MenuItem();
             this.mnuTrayContextMenu = new System.Windows.Forms.ContextMenu();
             this.mnuTraySettings = new System.Windows.Forms.MenuItem();
             this.mnuShow = new System.Windows.Forms.MenuItem();
@@ -282,7 +293,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             // 
             // menuItem1
             // 
-            menuItem1.Index = 2;
+            menuItem1.Index = 3;
             menuItem1.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
             this.mnuAbout});
             menuItem1.Text = "&Help";
@@ -314,14 +325,14 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.lvProjects.Location = new System.Drawing.Point(203, 38);
             this.lvProjects.MultiSelect = false;
             this.lvProjects.Name = "lvProjects";
-            this.lvProjects.Size = new System.Drawing.Size(972, 188);
+            this.lvProjects.Size = new System.Drawing.Size(972, 0);
             this.lvProjects.SmallImageList = this.iconList;
             this.lvProjects.TabIndex = 0;
             this.lvProjects.UseCompatibleStateImageBehavior = false;
             this.lvProjects.View = System.Windows.Forms.View.Details;
+            this.lvProjects.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.lvProjects_ColumnClick);
             this.lvProjects.SelectedIndexChanged += new System.EventHandler(this.lvProjects_SelectedIndexChanged);
             this.lvProjects.DoubleClick += new System.EventHandler(this.lvProjects_DoubleClick);
-            this.lvProjects.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.lvProjects_ColumnClick);
             // 
             // colProject
             // 
@@ -371,7 +382,6 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             // 
             this.colQPriority.Text = "Q Priority";
             this.colQPriority.Width = 100;
-
             // 
             // projectContextMenu
             // 
@@ -467,6 +477,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.mainMenu.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
             this.menuFile,
             this.mnuView,
+            this.mnuUnit4,
             menuItem1});
             // 
             // menuFile
@@ -501,7 +512,9 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.mnuView.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
             this.mnuViewIcons,
             this.mnuViewList,
-            this.mnuViewDetails});
+            this.mnuViewDetails,
+            this.mnuHideSucceded,
+            this.mnuHideBuilding});
             this.mnuView.Text = "&View";
             this.mnuView.Popup += new System.EventHandler(this.mnuView_Popup);
             // 
@@ -522,6 +535,38 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.mnuViewDetails.Index = 2;
             this.mnuViewDetails.Text = "&Details";
             this.mnuViewDetails.Click += new System.EventHandler(this.mnuViewDetails_Click);
+            // 
+            // mnuHideSucceded
+            // 
+            this.mnuHideSucceded.Index = 3;
+            this.mnuHideSucceded.Text = "Hide succeeded";
+            this.mnuHideSucceded.Click += new System.EventHandler(this.mnuHideSucceded_Click);
+            // 
+            // mnuHideBuilding
+            // 
+            this.mnuHideBuilding.Index = 4;
+            this.mnuHideBuilding.Text = "Hide building";
+            this.mnuHideBuilding.Click += new System.EventHandler(this.mnuHideBuilding_Click);
+            // 
+            // mnuUnit4
+            // 
+            this.mnuUnit4.Index = 2;
+            this.mnuUnit4.MenuItems.AddRange(new System.Windows.Forms.MenuItem[] {
+            this.mnuCIOverview,
+            this.mnuContactTeam});
+            this.mnuUnit4.Text = "Unit4";
+            // 
+            // mnuCIOverview
+            // 
+            this.mnuCIOverview.Index = 0;
+            this.mnuCIOverview.Text = "CI Machines Overview";
+            this.mnuCIOverview.Click += new System.EventHandler(this.menuItem4_Click);
+            // 
+            // mnuContactTeam
+            // 
+            this.mnuContactTeam.Index = 1;
+            this.mnuContactTeam.Text = "Contact CI Team";
+            this.mnuContactTeam.Click += new System.EventHandler(this.menuItem2_Click);
             // 
             // mnuTrayContextMenu
             // 
@@ -562,7 +607,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.pnlButtons.Controls.Add(this.btnForceBuild);
             this.pnlButtons.Controls.Add(this.btnStartStopProject);
             this.pnlButtons.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlButtons.Location = new System.Drawing.Point(0, 226);
+            this.pnlButtons.Location = new System.Drawing.Point(0, -45);
             this.pnlButtons.Name = "pnlButtons";
             this.pnlButtons.Size = new System.Drawing.Size(1175, 45);
             this.pnlButtons.TabIndex = 1;
@@ -601,7 +646,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             // 
             this.splitterQueueView.Location = new System.Drawing.Point(200, 38);
             this.splitterQueueView.Name = "splitterQueueView";
-            this.splitterQueueView.Size = new System.Drawing.Size(3, 188);
+            this.splitterQueueView.Size = new System.Drawing.Size(3, 0);
             this.splitterQueueView.TabIndex = 3;
             this.splitterQueueView.TabStop = false;
             this.splitterQueueView.Visible = false;
@@ -612,7 +657,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.pnlViewQueues.Dock = System.Windows.Forms.DockStyle.Left;
             this.pnlViewQueues.Location = new System.Drawing.Point(0, 38);
             this.pnlViewQueues.Name = "pnlViewQueues";
-            this.pnlViewQueues.Size = new System.Drawing.Size(200, 188);
+            this.pnlViewQueues.Size = new System.Drawing.Size(200, 0);
             this.pnlViewQueues.TabIndex = 4;
             this.pnlViewQueues.Visible = false;
             // 
@@ -682,8 +727,8 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             // 
             // updateProjectsMessage
             // 
-            this.updateProjectsMessage.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.updateProjectsMessage.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.updateProjectsMessage.AutoEllipsis = true;
             this.updateProjectsMessage.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.updateProjectsMessage.Location = new System.Drawing.Point(42, 3);
@@ -702,20 +747,21 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             // 
             // queueTreeView
             // 
+            this.queueTreeView.BackColor = System.Drawing.SystemColors.Window;
             this.queueTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.queueTreeView.ImageIndex = 0;
             this.queueTreeView.ImageList = this.queueIconList;
             this.queueTreeView.Location = new System.Drawing.Point(0, 0);
             this.queueTreeView.Name = "queueTreeView";
             this.queueTreeView.SelectedImageIndex = 0;
-            this.queueTreeView.Size = new System.Drawing.Size(200, 188);
+            this.queueTreeView.Size = new System.Drawing.Size(200, 0);
             this.queueTreeView.TabIndex = 2;
             this.queueTreeView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.queueTreeView_MouseUp);
             // 
             // MainForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(1175, 271);
+            this.ClientSize = new System.Drawing.Size(1175, 0);
             this.Controls.Add(this.lvProjects);
             this.Controls.Add(this.splitterQueueView);
             this.Controls.Add(this.pnlViewQueues);
@@ -727,7 +773,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.MinimizeBox = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
-            this.Text = "CCTray ";
+            this.Text = "Unit4 - CCTray ";
             this.Closing += new System.ComponentModel.CancelEventHandler(this.MainForm_Closing);
             this.pnlButtons.ResumeLayout(false);
             this.pnlViewQueues.ResumeLayout(false);
@@ -933,11 +979,18 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
                 MainFormController oldController = controller;
                 CreateController();
                 oldController.ProjectStateIconProvider.Dispose();
+                ResetViewFilters();
             }
             finally
             {
                 controller.StartServerMonitoring();
             }
+        }
+
+        private void ResetViewFilters()
+        {
+            mnuHideSucceded.Checked = false;
+            mnuHideBuilding.Checked = false;
         }
 
         private void mnuView_Popup(object sender, EventArgs e)
@@ -1269,6 +1322,29 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
         private void updateProjectsButton_Click(object sender, EventArgs e)
         {
             controller.UpdateProjectList();
+        }
+
+        private void mnuHideSucceded_Click(object sender, EventArgs e)
+        {
+            mnuHideSucceded.Checked = !mnuHideSucceded.Checked;
+            controller.hideSucceded(mnuHideSucceded.Checked);
+        }
+
+        private void mnuHideBuilding_Click(object sender, EventArgs e)
+        {
+            mnuHideBuilding.Checked = !mnuHideBuilding.Checked;
+            controller.hideBuilding(mnuHideBuilding.Checked);
+        }
+
+        private void menuItem4_Click(object sender, EventArgs e)
+        {
+            ProcessStartInfo sInfo = new ProcessStartInfo("http://agressord/Developer/TestDrivenDevelopment/Overview%20test%20machines.aspx");
+            Process.Start(sInfo);
+        }
+
+        private void menuItem2_Click(object sender, EventArgs e)
+        {
+            Process.Start("mailto:" + "RD.Continuous.Integration@corp.u4agr.com");
         }
     }
 }
