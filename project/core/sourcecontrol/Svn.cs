@@ -728,15 +728,6 @@ namespace ThoughtWorks.CruiseControl.Core.Sourcecontrol
 
         private bool DoesSvnDirectoryExist(IIntegrationResult result)
         {
-            //string svnDirectory = Path.Combine(result.BaseFromWorkingDirectory(WorkingDirectory), ".svn");
-            //string underscoreSvnDirectory = Path.Combine(result.BaseFromWorkingDirectory(WorkingDirectory), "_svn");
-
-            //Console.WriteLine(svnDirectory);
-            //Console.WriteLine(underscoreSvnDirectory);
-
-
-            //return fileSystem.DirectoryExists(svnDirectory) || fileSystem.DirectoryExists(underscoreSvnDirectory);
-
             return SvnFolderFound(result.BaseFromWorkingDirectory(WorkingDirectory));
         }
 
@@ -824,9 +815,23 @@ namespace ThoughtWorks.CruiseControl.Core.Sourcecontrol
             using (StringReader reader = new StringReader(result.StandardOutput))
             {
                 string externalsDefinition;
+                string rootUrl = "";
 
                 while ((externalsDefinition = reader.ReadLine()) != null)
                 {
+
+                    const string svnScheme = @"svn://";
+                    //Get repo root
+                    if (externalsDefinition.Contains(svnScheme))
+                    {
+                        int index = externalsDefinition.IndexOf(svnScheme, 0);
+                        rootUrl = externalsDefinition.Substring(index);
+                        index = rootUrl.IndexOf('/', svnScheme.Length + 1);
+                        index = rootUrl.IndexOf('/', index + 1);
+                        rootUrl = rootUrl.Substring(0, index);
+                    }
+                    
+                    
                     // If this external is not a specific revision and is not an empty string
                     if (!externalsDefinition.Contains("-r") && !(externalsDefinition.Length == 0))
                     {
@@ -846,6 +851,10 @@ namespace ThoughtWorks.CruiseControl.Core.Sourcecontrol
 
                         if (!externalDirectories.Contains(externalsDefinition))
                         {
+                            if (externalsDefinition.StartsWith("^"))
+                            {
+                                externalsDefinition = rootUrl + externalsDefinition.TrimStart('^');
+                            }
                             externalDirectories.Add(externalsDefinition);
                         }
                     }
