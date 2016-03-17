@@ -16,6 +16,8 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 {
     public class MainFormController
     {
+        const string DISCONNECTED = "disconnected";
+
         private IProjectMonitor selectedProject;
         private readonly ICCTrayMultiConfiguration configuration;
         private Poller serverPoller;
@@ -34,6 +36,9 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
         private MainForm mainForm;
         private Dictionary<string, ServerSnapshotChangedEventArgs> changeList = new Dictionary<string, ServerSnapshotChangedEventArgs>();
         private IList<ProjectState> hideStates = new List<ProjectState>();
+        private Dictionary<string, bool> showWithFlags = new Dictionary<string, bool>() { 
+            {DISCONNECTED, true}
+        };
 #if !DISABLE_COM
         private SpeakingProjectMonitor speakerForTheDead;
 #endif
@@ -264,7 +269,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             IDetailStringProvider detailStringProvider = new DetailStringProvider();
             foreach (IProjectMonitor monitor in projectMonitors)
             {
-                ListViewItem item = new ProjectStatusListViewItemAdaptor(detailStringProvider, configuration, listView, hideStates).Create(monitor);
+                ListViewItem item = new ProjectStatusListViewItemAdaptor(detailStringProvider, configuration, listView, hideStates, showWithFlags).Create(monitor);
                 item.Tag = monitor;
                 listView.Items.Add(item);
             }
@@ -390,6 +395,8 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             if (project.IsConnected)
             {
                 string url = project.WebURL;
+                url = url.Replace("ViewFarmReport.aspx", "/project/" + project.Activity + "/ViewProjectReport.aspx");
+                url = url.Replace("ViewServerReport.aspx", "/project/" + project.Activity + "/ViewProjectReport.aspx");
                 Process.Start(url);
             }
         }
@@ -709,6 +716,9 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             }
         }
 
+        public void hideDisconnected(bool hide) {
+            this.showWithFlags[DISCONNECTED] = !hide;
+        }
 
         public void hideSucceded(bool hide)
         {

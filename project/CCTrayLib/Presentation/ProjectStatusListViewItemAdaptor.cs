@@ -24,16 +24,18 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
         private readonly ICCTrayMultiConfiguration config = null;
         private readonly ListView listView = null;
         private readonly IList<ProjectState> hideStates = null;
+        private readonly Dictionary<string, bool> showWithFlags = null;
 
         private bool removed = false;
         
 
-        public ProjectStatusListViewItemAdaptor(IDetailStringProvider detailStringProvider, ICCTrayMultiConfiguration config, ListView listView, IList<ProjectState> hideStates)
+        public ProjectStatusListViewItemAdaptor(IDetailStringProvider detailStringProvider, ICCTrayMultiConfiguration config, ListView listView, IList<ProjectState> hideStates, Dictionary<string, bool> showWithFlags)
             : this(detailStringProvider)
         {
             this.config = config;
             this.listView = listView;
             this.hideStates = hideStates;
+            this.showWithFlags = showWithFlags;
         }
 
         public ProjectStatusListViewItemAdaptor(IDetailStringProvider detailStringProvider)
@@ -73,7 +75,9 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
 
         private void Monitor_Polled(object sauce, MonitorPolledEventArgs args)
         {
-            if (hideStates.Contains(args.ProjectMonitor.ProjectState))
+            bool showDisconnected;
+            this.showWithFlags.TryGetValue("disconnected", out showDisconnected);
+            if (hideStates.Contains(args.ProjectMonitor.ProjectState) || !showDisconnected && !args.ProjectMonitor.IsConnected)
             {
                 this.removed = true;
                 item.Remove();

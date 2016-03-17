@@ -98,6 +98,8 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
         private MenuItem mnuUnit4;
         private MenuItem mnuCIOverview;
         private MenuItem mnuContactTeam;
+        private MenuItem menuItem4;
+        private MenuItem mnuHideDisconnected;
         private readonly TrayIconFacade iconFacade;
 
         public MainForm(ICCTrayMultiConfiguration configuration)
@@ -258,8 +260,10 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.mnuViewIcons = new System.Windows.Forms.MenuItem();
             this.mnuViewList = new System.Windows.Forms.MenuItem();
             this.mnuViewDetails = new System.Windows.Forms.MenuItem();
+            this.menuItem4 = new System.Windows.Forms.MenuItem();
             this.mnuHideSucceded = new System.Windows.Forms.MenuItem();
             this.mnuHideBuilding = new System.Windows.Forms.MenuItem();
+            this.mnuHideDisconnected = new System.Windows.Forms.MenuItem();
             this.mnuUnit4 = new System.Windows.Forms.MenuItem();
             this.mnuCIOverview = new System.Windows.Forms.MenuItem();
             this.mnuContactTeam = new System.Windows.Forms.MenuItem();
@@ -325,7 +329,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.lvProjects.Location = new System.Drawing.Point(203, 38);
             this.lvProjects.MultiSelect = false;
             this.lvProjects.Name = "lvProjects";
-            this.lvProjects.Size = new System.Drawing.Size(972, 0);
+            this.lvProjects.Size = new System.Drawing.Size(972, 282);
             this.lvProjects.SmallImageList = this.iconList;
             this.lvProjects.TabIndex = 0;
             this.lvProjects.UseCompatibleStateImageBehavior = false;
@@ -513,8 +517,10 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.mnuViewIcons,
             this.mnuViewList,
             this.mnuViewDetails,
+            this.menuItem4,
             this.mnuHideSucceded,
-            this.mnuHideBuilding});
+            this.mnuHideBuilding,
+            this.mnuHideDisconnected});
             this.mnuView.Text = "&View";
             this.mnuView.Popup += new System.EventHandler(this.mnuView_Popup);
             // 
@@ -536,17 +542,28 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.mnuViewDetails.Text = "&Details";
             this.mnuViewDetails.Click += new System.EventHandler(this.mnuViewDetails_Click);
             // 
+            // menuItem4
+            // 
+            this.menuItem4.Index = 3;
+            this.menuItem4.Text = "-";
+            // 
             // mnuHideSucceded
             // 
-            this.mnuHideSucceded.Index = 3;
+            this.mnuHideSucceded.Index = 4;
             this.mnuHideSucceded.Text = "Hide succeeded";
             this.mnuHideSucceded.Click += new System.EventHandler(this.mnuHideSucceded_Click);
             // 
             // mnuHideBuilding
             // 
-            this.mnuHideBuilding.Index = 4;
+            this.mnuHideBuilding.Index = 5;
             this.mnuHideBuilding.Text = "Hide building";
             this.mnuHideBuilding.Click += new System.EventHandler(this.mnuHideBuilding_Click);
+            // 
+            // mnuHideDisconnected
+            // 
+            this.mnuHideDisconnected.Index = 6;
+            this.mnuHideDisconnected.Text = "Hide pre 1.6 disconnected";
+            this.mnuHideDisconnected.Click += new System.EventHandler(this.menuItem2_Click_1);
             // 
             // mnuUnit4
             // 
@@ -607,7 +624,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.pnlButtons.Controls.Add(this.btnForceBuild);
             this.pnlButtons.Controls.Add(this.btnStartStopProject);
             this.pnlButtons.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlButtons.Location = new System.Drawing.Point(0, -45);
+            this.pnlButtons.Location = new System.Drawing.Point(0, 320);
             this.pnlButtons.Name = "pnlButtons";
             this.pnlButtons.Size = new System.Drawing.Size(1175, 45);
             this.pnlButtons.TabIndex = 1;
@@ -646,7 +663,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             // 
             this.splitterQueueView.Location = new System.Drawing.Point(200, 38);
             this.splitterQueueView.Name = "splitterQueueView";
-            this.splitterQueueView.Size = new System.Drawing.Size(3, 0);
+            this.splitterQueueView.Size = new System.Drawing.Size(3, 282);
             this.splitterQueueView.TabIndex = 3;
             this.splitterQueueView.TabStop = false;
             this.splitterQueueView.Visible = false;
@@ -657,7 +674,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.pnlViewQueues.Dock = System.Windows.Forms.DockStyle.Left;
             this.pnlViewQueues.Location = new System.Drawing.Point(0, 38);
             this.pnlViewQueues.Name = "pnlViewQueues";
-            this.pnlViewQueues.Size = new System.Drawing.Size(200, 0);
+            this.pnlViewQueues.Size = new System.Drawing.Size(200, 282);
             this.pnlViewQueues.TabIndex = 4;
             this.pnlViewQueues.Visible = false;
             // 
@@ -754,14 +771,14 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
             this.queueTreeView.Location = new System.Drawing.Point(0, 0);
             this.queueTreeView.Name = "queueTreeView";
             this.queueTreeView.SelectedImageIndex = 0;
-            this.queueTreeView.Size = new System.Drawing.Size(200, 0);
+            this.queueTreeView.Size = new System.Drawing.Size(200, 282);
             this.queueTreeView.TabIndex = 2;
             this.queueTreeView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.queueTreeView_MouseUp);
             // 
             // MainForm
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-            this.ClientSize = new System.Drawing.Size(1175, 0);
+            this.ClientSize = new System.Drawing.Size(1175, 365);
             this.Controls.Add(this.lvProjects);
             this.Controls.Add(this.splitterQueueView);
             this.Controls.Add(this.pnlViewQueues);
@@ -991,6 +1008,7 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
         {
             mnuHideSucceded.Checked = false;
             mnuHideBuilding.Checked = false;
+            mnuHideDisconnected.Checked = false;
         }
 
         private void mnuView_Popup(object sender, EventArgs e)
@@ -1345,6 +1363,12 @@ namespace ThoughtWorks.CruiseControl.CCTrayLib.Presentation
         private void menuItem2_Click(object sender, EventArgs e)
         {
             Process.Start("mailto:" + "RD.Continuous.Integration@corp.u4agr.com");
+        }
+
+        private void menuItem2_Click_1(object sender, EventArgs e)
+        {
+            mnuHideDisconnected.Checked = !mnuHideDisconnected.Checked;
+            controller.hideDisconnected(mnuHideDisconnected.Checked);
         }
     }
 }
