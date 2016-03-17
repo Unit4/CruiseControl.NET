@@ -13,6 +13,7 @@ namespace ThoughtWorks.CruiseControl.WebDashboard.Dashboard
         private readonly IServerSpecifier serverSpecifier;
         private readonly string url;
         private readonly string parametersUrl;
+        private readonly string statistics;
 
         public ProjectGridRow(ProjectStatus status, IServerSpecifier serverSpecifier,
             string url, string parametersUrl, Translations translations)
@@ -21,6 +22,12 @@ namespace ThoughtWorks.CruiseControl.WebDashboard.Dashboard
             this.serverSpecifier = serverSpecifier;
             this.url = url;
             this.parametersUrl = parametersUrl;
+        }
+
+        public ProjectGridRow(ProjectStatus status, IServerSpecifier serverSpecifier,
+            string url, string parametersUrl, string statistics, Translations translations) : this(status, serverSpecifier, url, parametersUrl, translations)
+        {
+            this.statistics = statistics;
         }
 
         public string Name
@@ -169,6 +176,10 @@ namespace ThoughtWorks.CruiseControl.WebDashboard.Dashboard
         public bool AllowStartStopBuild
         {
             get { return serverSpecifier.AllowStartStopBuild && status.ShowStartStopButton; }
+        }
+
+        public string Statistics {
+            get { return this.statistics; }
         }
 
         private string CalculateHtmlColor(IntegrationStatus integrationStatus)

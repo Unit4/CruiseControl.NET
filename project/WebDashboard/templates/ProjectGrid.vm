@@ -105,6 +105,7 @@
       <th>$translations.Translate("Last Build Time")</th>
       <th>$translations.Translate("Next Build Time")</th>
       <th>$translations.Translate("Last Build Label")</th>
+      <th>$translations.Translate("Statistics")</th>
       <th>$translations.Translate("CCNet Status")</th>
       <th>$translations.Translate("Activity")</th>
       <th class="{sorter:false}">$translations.Translate("Messages")</th>      
@@ -120,6 +121,7 @@
             #if ($wholeFarm)
             <td class="Black left">$projectGridRow.ServerName</td>
             #end
+            <td>$projectGridRow.Statistics</td>
             <td>
               <form method="post"
                     style="margin-bottom:0px;">
